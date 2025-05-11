@@ -15,14 +15,13 @@ describe('NFT', () => {
 
   let nft
 
-  beforeEach(async () => {
-    const NFT = await ethers.getContractFactory('NFT')
-    nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY)
-    await nft.deployed()
-
-  })
-
   describe('Deployment', () => {
+    const ALLOW_MINTING_ON = '1748736000'
+
+    beforeEach(async () => {
+      const NFT = await ethers.getContractFactory('NFT')
+      nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON)
+    })
 
     it('has correct name', async () => {
       expect(await nft.name()).to.equal(NAME)
@@ -38,6 +37,10 @@ describe('NFT', () => {
 
     it('returns max supply', async () => {
       expect(await nft.maxSupply()).to.equal(MAX_SUPPLY)
+    })
+
+    it('returns the allow minting on timestamp', async () => {
+      expect(await nft.allowMintingOn()).to.equal(ALLOW_MINTING_ON)
     })
 
   })
