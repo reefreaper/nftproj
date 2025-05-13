@@ -86,12 +86,12 @@ describe('NFT', () => {
         expect(await nft.balanceOf(minter.address)).to.equal(1)
       })
 
-//      it('returns IPFS URI', async () => {
+      it('returns IPFS URI', async () => {
         // EG: 'ipfs://QmQ2jnDYecFhrf3asEWjyjZRX1pZSsNWG3qHzmNDvXa9qg/1.json'
         // Uncomment this line to see example
         // console.log(await nft.tokenURI(1))
-//        expect(await nft.tokenURI(1)).to.equal(`${BASE_URI}1.json`)
-//      })
+        expect(await nft.tokenURI(1)).to.equal(`${BASE_URI}1.json`)
+      })
 
       it('updates the total supply', async () => {
         expect(await nft.totalSupply()).to.equal(1)
@@ -101,10 +101,10 @@ describe('NFT', () => {
         expect(await ethers.provider.getBalance(nft.address)).to.equal(COST)
       })
 
-//      it('emits Mint event', async () => {
-//        await expect(transaction).to.emit(nft, 'Mint')
-//          .withArgs(1, minter.address)
-//      })
+      it('emits Mint event', async () => {
+        await expect(transaction).to.emit(nft, 'Mint')
+          .withArgs(1, minter.address)
+      })
 
     })
 
@@ -119,6 +119,14 @@ describe('NFT', () => {
 
       })
 
+      it('requires at least 1 NFT to be minted', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+
+        await expect(nft.connect(minter).mint(0, { value: COST })).to.be.reverted
+      })
+
       it('rejects minting before allowed time', async () => {
         const ALLOW_MINTING_ON = new Date('May 26, 2030 18:00:00').getTime().toString().slice(0, 10)
         const NFT = await ethers.getContractFactory('NFT')
@@ -127,8 +135,64 @@ describe('NFT', () => {
         await expect(nft.connect(minter).mint(1, { value: COST })).to.be.reverted
       })
 
+      it('rejects minting more than max supply', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+
+        await expect(nft.connect(minter).mint(100, { value: COST })).to.be.reverted
+      })
+
+      it('does not return URIs for invalid tokens', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        nft.connect(minter).mint(1, { value: COST })
+
+        await expect(nft.tokenURI('99')).to.be.reverted
+      })
+
     })
+
 
   })
 
+  describe('Displaying NFTs', () => {
+    let transaction, result
+
+    const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+
+    beforeEach(async () => {
+      const NFT = await ethers.getContractFactory('NFT')
+      nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+
+      // Mint 3 nfts
+      transaction = await nft.connect(minter).mint(3, { value: ether(30) })
+      result = await transaction.wait()
+    })
+
+    it('returns all the NFTs for a given owner', async () => {
+      let tokenIds = await nft.walletOfOwner(minter.address)
+      // Uncomment this line to see the return value
+      // console.log("owner wallet", tokenIds)
+      expect(tokenIds.length).to.equal(3)
+      expect(tokenIds[0].toString()).to.equal('1')
+      expect(tokenIds[1].toString()).to.equal('2')
+      expect(tokenIds[2].toString()).to.equal('3')
+    })
+
+
+  })
+
+  describe('Failure', async () => {
+
+      it('prevents non-owner from withdrawing', async () => {
+        const ALLOW_MINTING_ON = Date.now().toString().slice(0, 10) // Now
+        const NFT = await ethers.getContractFactory('NFT')
+        nft = await NFT.deploy(NAME, SYMBOL, COST, MAX_SUPPLY, ALLOW_MINTING_ON, BASE_URI)
+        nft.connect(minter).mint(1, { value: COST })
+
+        await expect(nft.connect(minter).withdraw()).to.be.reverted
+      })
+    })
 })
