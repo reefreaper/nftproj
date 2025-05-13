@@ -16,6 +16,7 @@ contract NFT is ERC721Enumerable, Ownable {
 
     event Mint(uint256 amount, address indexed minter);
     event Withdraw(uint256 amount, address owner);
+
     constructor(
         string memory _name,
         string memory _symbol,
