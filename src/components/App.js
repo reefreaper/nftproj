@@ -86,12 +86,17 @@ function App() {
         <>
           <Row>
             <Col>
-              <img src={preview} alt="" />
+              <img 
+                src={`https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${balance.toString()}.png`}
+                alt="Open Punk"
+                width='200'
+                height='200'
+              />
             </Col>
             <Col>
-              <div className='my-4 text-center'>
+              <div className='my-4 text-center'><strong>
                 <Countdown date={parseInt(revealTime)} classname='h2' />
-              </div>
+              </strong></div>
 
               <Data
                 maxSupply={maxSupply}

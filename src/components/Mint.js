@@ -23,13 +23,10 @@ const Mint = ({ provider, nft, cost, setIsLoading }) => {
   }
 
   return (
-    <Form onSubmit={mintHandler} style={{ maxWidth: '450px', margin: '50px,  auto' }}>
+    <Form onSubmit={mintHandler} style={{ maxWidth: '450px', margin: 'auto' }}>
        {isWaiting ? (
-
         <Spinner animation="border" style={{ maxWidth: '450px', margin: '50px auto' }} />
-
-      ) : (
-
+        ) : (
         <Form.Group>
           <Button  variant="primary" type="submit" style={{ width: "100%" }}>
             Mint
