@@ -12,6 +12,7 @@ contract NFT is ERC721Enumerable, Ownable {
     string public baseExtension = '.json';
     uint256 public cost;
     uint256 public maxSupply;
+    uint256 public maxMintAmount = 5;
     uint256 public allowMintingOn;
 
     event Mint(uint256 amount, address indexed minter);
@@ -38,6 +39,8 @@ contract NFT is ERC721Enumerable, Ownable {
         require(_mintAmount > 0);
         // Require enough payment
         require(msg.value >= cost * _mintAmount);
+        // Require mint amount does not exceed 5 
+        require(_mintAmount <= maxMintAmount, "Cannot mint more than maxMintAmount");
 
         uint256 supply = totalSupply();
 
@@ -52,6 +55,11 @@ contract NFT is ERC721Enumerable, Ownable {
 
         // Emit event
         emit Mint(_mintAmount, msg.sender);
+    }
+
+    // Add a function to set maxMintAmount (only owner)
+    function setMaxMintAmount(uint256 _newMaxMintAmount) public onlyOwner {
+        maxMintAmount = _newMaxMintAmount;
     }
 
     // Return metadata IPFS url
