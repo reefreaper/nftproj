@@ -1,6 +1,6 @@
 import Navbar from 'react-bootstrap/Navbar';
 
-import logo from '../logo.png';
+import logo from '../docs_img.jpeg';
 
 const Navigation = ({ account }) => {
   return (
@@ -12,7 +12,7 @@ const Navigation = ({ account }) => {
         height="40"
         className="d-inline-block align-top mx-3"
       />
-      <Navbar.Brand href="#">Dapp Punks</Navbar.Brand>
+      <Navbar.Brand href="#">Asset Docs</Navbar.Brand>
       <Navbar.Collapse className="justify-content-end">
         <Navbar.Text>
           {account}

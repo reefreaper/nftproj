@@ -90,7 +90,8 @@ function App() {
         const tokenIds = await nft.walletOfOwner(account)
         const nftData = tokenIds.map(id => ({
           id: id.toString(),
-          imageUrl: `https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${id.toString()}.png`
+          //imageUrl: `https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${id.toString()}.png`
+          imageUrl: `https://gateway.pinata.cloud/ipfs/bafybeibf7yagmdkyttc7qb5ybvhytopogfi6c6mg6ktv6twutuyxv42ydm/${id.toString()}.png`
         }))
         setUserNFTs(nftData)
         console.log("User NFTs:", nftData)
@@ -112,8 +113,7 @@ function App() {
     <Container>
       <Navigation account={account} />
 
-      <h1 className='my-1 text-center'>NFT Marketplace Machine</h1>
-      <h2 className='my-2 text-center'>Dapp Punks</h2>
+      <h2 className='my-1 text-center'>Your Immutable Assets</h2>
 
       {isLoading ? (
         <Loading />
@@ -123,18 +123,18 @@ function App() {
             <Col>
               {userNFTs.length > 0 ? (
                 <div>
-                  <h3 className="text-center mb-4">Your NFT Collection</h3>
+                  <h4 className="text-center mb-4">Your Asset Documents</h4>
                   <div className="d-flex flex-wrap justify-content-center">
                     {userNFTs.map(nft => (
                       <div key={nft.id} className="m-2 text-center">
                         <img 
                           src={nft.imageUrl}
                           alt={`Punk #${nft.id}`}
-                          width="150"
-                          height="150"
+                          width="80"
+                          height="110"
                           className="border rounded"
                         />
-                        <p className="mt-1"><small>Punk #{nft.id}</small></p>
+                        <p className="mt-1"><small>Asset Doc #{nft.id}</small></p>
                       </div>
                     ))}
                   </div>
@@ -143,7 +143,7 @@ function App() {
                 <div className="text-center">
                   <img 
                     src={preview}
-                    alt="Preview Punk"
+                    alt="Document Preview"
                     width="200"
                     height="200"
                   />
