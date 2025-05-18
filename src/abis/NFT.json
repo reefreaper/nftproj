@@ -301,6 +301,19 @@
     },
     {
       "inputs": [],
+      "name": "maxMintAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "maxSupply",
       "outputs": [
         {
@@ -455,6 +468,19 @@
         }
       ],
       "name": "setCost",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_newMaxMintAmount",
+          "type": "uint256"
+        }
+      ],
+      "name": "setMaxMintAmount",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
