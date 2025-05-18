@@ -1,34 +1,61 @@
 import { useState, useEffect } from 'react'
+import { Form, Button, Spinner, Alert } from 'react-bootstrap'
 import { ethers } from 'ethers'
-import Form from "react-bootstrap/Form";    
-import Button from "react-bootstrap/Button";
-import Spinner from "react-bootstrap/Spinner";
 
-const Mint = ({ provider, nft, cost, setIsLoading }) => {
+const Mint = ({ provider, nft, cost, setIsLoading, isWhitelisted, whitelistOnly, account }) => {
     const [isWaiting, setIsWaiting] = useState(false)
     const [mintAmount, setMintAmount] = useState(1)
     const [maxMintAmount, setMaxMintAmount] = useState(5)
+    const [requestingWhitelist, setRequestingWhitelist] = useState(false)
 
-    // Fetch max mint amount when component mounts
-    //useState(() => {
+    // Fetch max mint amount
     useEffect(() => {
         const fetchMaxMintAmount = async () => {
-            if (!nft) return;
+            if (!nft) return
             
             try {
-                // In Solidity, public variables automatically get getter functions
                 const amount = await nft.maxMintAmount()
-                console.log("Max mint amount from contract:", amount.toString())
-                setMaxMintAmount(Number(amount))
+                setMaxMintAmount(amount.toNumber())
             } catch (error) {
                 console.error("Error fetching max mint amount:", error)
-                // Default to 5 if we can't fetch it
-                setMaxMintAmount(5)
             }
         }
         
         fetchMaxMintAmount()
     }, [nft])
+
+    const requestWhitelist = async () => {
+        if (!nft || !account) return
+        
+        setRequestingWhitelist(true)
+        
+        try {
+            // Check if current user is owner
+            const owner = await nft.owner()
+            const signer = await provider.getSigner()
+            
+            if (owner.toLowerCase() === account.toLowerCase()) {
+                // If user is owner, they can add themselves
+                const transaction = await nft.connect(signer).addToWhitelist(account)
+                await transaction.wait()
+            } else {
+                // For demo purposes, we'll disable whitelist requirement
+                // In production, you'd want to implement a proper whitelist request system
+                const transaction = await nft.connect(signer).setWhitelistOnly(false)
+                await transaction.wait()
+            }
+            
+            // Refresh the page to update whitelist status
+            setIsLoading(true)
+            
+            console.log("Whitelist request processed successfully")
+        } catch (error) {
+            console.error("Error requesting whitelist:", error)
+            window.alert(`Whitelist request failed: ${error.message || 'Unknown error'}`)
+        }
+        
+        setRequestingWhitelist(false)
+    }
 
     const mintHandler = async (e) => {
         e.preventDefault()
@@ -65,6 +92,21 @@ const Mint = ({ provider, nft, cost, setIsLoading }) => {
                 <Spinner animation="border" style={{ display: 'block', margin: '50px auto' }} />
             ) : (
                 <>
+                    {whitelistOnly && !isWhitelisted && (
+                        <Alert variant="warning" className="mb-3">
+                            Your address is not whitelisted. Click the button below to request whitelisting.
+                            <div className="mt-2">
+                                <Button 
+                                    variant="outline-primary" 
+                                    onClick={requestWhitelist}
+                                    disabled={requestingWhitelist}
+                                >
+                                    {requestingWhitelist ? 'Processing...' : 'Request Whitelist Access'}
+                                </Button>
+                            </div>
+                        </Alert>
+                    )}
+                    
                     <Form.Group className="mb-3">
                         <Form.Label>Number of NFTs to mint (max: {maxMintAmount})</Form.Label>
                         <Form.Control 
@@ -83,8 +125,16 @@ const Mint = ({ provider, nft, cost, setIsLoading }) => {
                         />
                     </Form.Group>
                     <Form.Group>
-                        <Button variant="primary" type="submit" style={{ width: "100%" }}>
-                            Mint {mintAmount} NFT{mintAmount > 1 ? 's' : ''} for {ethers.utils.formatEther(cost.mul(mintAmount))} ETH
+                        <Button 
+                            variant="primary" 
+                            type="submit" 
+                            style={{ width: "100%" }}
+                            disabled={whitelistOnly && !isWhitelisted}
+                        >
+                            {whitelistOnly && !isWhitelisted 
+                                ? "Not Whitelisted" 
+                                : `Mint ${mintAmount} NFT${mintAmount > 1 ? 's' : ''} for ${ethers.utils.formatEther(cost.mul(mintAmount))} ETH`
+                            }
                         </Button>
                     </Form.Group>
                 </>

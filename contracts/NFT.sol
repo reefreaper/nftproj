@@ -15,8 +15,16 @@ contract NFT is ERC721Enumerable, Ownable {
     uint256 public maxMintAmount = 5;
     uint256 public allowMintingOn;
 
+    // whitelist mapping
+    mapping(address => bool) public whitelist;
+    //bool public whitelistMintEnabled = false;
+    bool public whitelistOnly = true;
+
     event Mint(uint256 amount, address indexed minter);
     event Withdraw(uint256 amount, address owner);
+    event AddedToWhitelist(address indexed account);
+    event RemovedFromWhitelist(address indexed account);
+    event WhitelistOnlyChanged(bool indexed whitelistOnly);
 
     constructor(
         string memory _name,
@@ -41,6 +49,10 @@ contract NFT is ERC721Enumerable, Ownable {
         require(msg.value >= cost * _mintAmount);
         // Require mint amount does not exceed 5 
         require(_mintAmount <= maxMintAmount, "Cannot mint more than maxMintAmount");
+        // Check if whitelistOnly is enabled and if so, check if user is whitelisted
+        if (whitelistOnly) {
+            require(whitelist[msg.sender], "Address Not whitelisted");
+        }
 
         uint256 supply = totalSupply();
 
@@ -55,6 +67,34 @@ contract NFT is ERC721Enumerable, Ownable {
 
         // Emit event
         emit Mint(_mintAmount, msg.sender);
+    }
+
+    // Whitelist management functions (owner only)
+    function addToWhitelist(address _address) public onlyOwner {
+        whitelist[_address] = true;
+        emit AddedToWhitelist(_address);
+    }
+    
+    function removeFromWhitelist(address _address) public onlyOwner {
+        whitelist[_address] = false;
+        emit RemovedFromWhitelist(_address);
+    }
+    
+    function addManyToWhitelist(address[] calldata _addresses) public onlyOwner {
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            whitelist[_addresses[i]] = true;
+            emit AddedToWhitelist(_addresses[i]);
+        }
+    }
+    
+    function setWhitelistOnly(bool _whitelistOnly) public onlyOwner {
+        whitelistOnly = _whitelistOnly;
+        emit WhitelistOnlyChanged(_whitelistOnly);
+    }
+    
+    // Check if an address is whitelisted
+    function isWhitelisted(address _address) public view returns (bool) {
+        return whitelist[_address];
     }
 
     // Add a function to set maxMintAmount (only owner)

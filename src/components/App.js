@@ -31,6 +31,13 @@ function App() {
   const [totalSupply, setTotalSupply] = useState(0)
   const [cost, setCost] = useState(0)
   const [balance, setBalance] = useState(0) // balance of NFTs 
+  
+  // Whitelist state
+  const [isWhitelisted, setIsWhitelisted] = useState(false)
+  const [whitelistOnly, setWhitelistOnly] = useState(true)
+  
+  // User's NFTs
+  const [userNFTs, setUserNFTs] = useState([])
 
   const [isLoading, setIsLoading] = useState(true)
 
@@ -63,6 +70,34 @@ function App() {
 
     // Fetch balance
     setBalance(await nft.balanceOf(account))
+    
+    // Fetch whitelist status
+    try {
+      const whitelistOnlyStatus = await nft.whitelistOnly()
+      setWhitelistOnly(whitelistOnlyStatus)
+      
+      const whitelistStatus = await nft.isWhitelisted(account)
+      setIsWhitelisted(whitelistStatus)
+      console.log(`Account ${account} whitelist status: ${whitelistStatus}`)
+    } catch (error) {
+      console.error("Error checking whitelist:", error)
+      setIsWhitelisted(false)
+    }
+    
+    // Fetch user's NFTs
+    try {
+      if (parseInt(await nft.balanceOf(account)) > 0) {
+        const tokenIds = await nft.walletOfOwner(account)
+        const nftData = tokenIds.map(id => ({
+          id: id.toString(),
+          imageUrl: `https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${id.toString()}.png`
+        }))
+        setUserNFTs(nftData)
+        console.log("User NFTs:", nftData)
+      }
+    } catch (error) {
+      console.error("Error fetching user NFTs:", error)
+    }
 
     setIsLoading(false)
   }
@@ -86,12 +121,35 @@ function App() {
         <>
           <Row>
             <Col>
-              <img 
-                src={`https://gateway.pinata.cloud/ipfs/QmQPEMsfd1tJnqYPbnTQCjoa8vczfsV1FmqZWgRdNQ7z3g/${balance.toString()}.png`}
-                alt="Open Punk"
-                width='200'
-                height='200'
-              />
+              {userNFTs.length > 0 ? (
+                <div>
+                  <h3 className="text-center mb-4">Your NFT Collection</h3>
+                  <div className="d-flex flex-wrap justify-content-center">
+                    {userNFTs.map(nft => (
+                      <div key={nft.id} className="m-2 text-center">
+                        <img 
+                          src={nft.imageUrl}
+                          alt={`Punk #${nft.id}`}
+                          width="150"
+                          height="150"
+                          className="border rounded"
+                        />
+                        <p className="mt-1"><small>Punk #{nft.id}</small></p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <img 
+                    src={preview}
+                    alt="Preview Punk"
+                    width="200"
+                    height="200"
+                  />
+                  <p className="mt-2">You don't own any NFTs yet</p>
+                </div>
+              )}
             </Col>
             <Col>
               <div className='my-4 text-center'><strong>
@@ -103,6 +161,8 @@ function App() {
                 totalSupply={totalSupply}
                 cost={cost}
                 balance={balance}
+                isWhitelisted={isWhitelisted}
+                whitelistOnly={whitelistOnly}
               />
 
               <Mint
@@ -110,6 +170,9 @@ function App() {
                 nft={nft}
                 cost={cost}
                 setIsLoading={setIsLoading}
+                isWhitelisted={isWhitelisted}
+                whitelistOnly={whitelistOnly}
+                account={account}
               />
 
             </Col>
