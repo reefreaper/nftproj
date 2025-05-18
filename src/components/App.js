@@ -76,7 +76,8 @@ function App() {
       const whitelistOnlyStatus = await nft.whitelistOnly()
       setWhitelistOnly(whitelistOnlyStatus)
       
-      const whitelistStatus = await nft.isWhitelisted(account)
+      // Use the whitelist mapping directly instead of isWhitelisted function
+      const whitelistStatus = await nft.whitelist(account)
       setIsWhitelisted(whitelistStatus)
       console.log(`Account ${account} whitelist status: ${whitelistStatus}`)
     } catch (error) {

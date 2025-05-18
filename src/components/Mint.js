@@ -30,28 +30,64 @@ const Mint = ({ provider, nft, cost, setIsLoading, isWhitelisted, whitelistOnly,
         setRequestingWhitelist(true)
         
         try {
-            // Check if current user is owner
-            const owner = await nft.owner()
             const signer = await provider.getSigner()
             
-            if (owner.toLowerCase() === account.toLowerCase()) {
-                // If user is owner, they can add themselves
-                const transaction = await nft.connect(signer).addToWhitelist(account)
-                await transaction.wait()
-            } else {
-                // For demo purposes, we'll disable whitelist requirement
-                // In production, you'd want to implement a proper whitelist request system
-                const transaction = await nft.connect(signer).setWhitelistOnly(false)
-                await transaction.wait()
+            // First check if the user is already whitelisted
+            // Use the whitelist mapping directly instead of isWhitelisted function
+            const alreadyWhitelisted = await nft.whitelist(account)
+            if (alreadyWhitelisted) {
+                console.log("Address already whitelisted")
+                window.alert("Your address is already whitelisted!")
+                setRequestingWhitelist(false)
+                setIsLoading(true) // Refresh UI
+                return
             }
             
-            // Refresh the page to update whitelist status
-            setIsLoading(true)
+            // Check if user is owner
+            const owner = await nft.owner()
+            const isOwner = owner.toLowerCase() === account.toLowerCase()
+            console.log("Current user is owner:", isOwner)
             
-            console.log("Whitelist request processed successfully")
+            if (isOwner) {
+                try {
+                    console.log("Adding self to whitelist as owner")
+                    // Explicitly set gas limit to avoid estimation issues
+                    const transaction = await nft.connect(signer).addToWhitelist(account, {
+                        gasLimit: 100000 // Explicit gas limit
+                    })
+                    await transaction.wait()
+                    console.log("Successfully added to whitelist")
+                    window.alert("Successfully added to whitelist!")
+                } catch (error) {
+                    console.error("Error adding to whitelist:", error)
+                    window.alert(`Failed to add to whitelist: ${error.message}`)
+                    setRequestingWhitelist(false)
+                    return
+                }
+            } else {
+                console.log("Not owner, attempting to disable whitelist requirement")
+                
+                try {
+                    // Try to disable whitelist requirement with explicit gas limit
+                    const transaction = await nft.connect(signer).setWhitelistOnly(false, {
+                        gasLimit: 100000 // Explicit gas limit
+                    })
+                    await transaction.wait()
+                    console.log("Successfully disabled whitelist requirement")
+                    window.alert("Whitelist requirement has been disabled for everyone!")
+                } catch (error) {
+                    console.error("Failed to disable whitelist:", error)
+                    window.alert("You don't have permission to modify the whitelist. Please use the contract owner account.")
+                    setRequestingWhitelist(false)
+                    return
+                }
+            }
+            
+            // Refresh the page to update status
+            setIsLoading(true)
         } catch (error) {
-            console.error("Error requesting whitelist:", error)
-            window.alert(`Whitelist request failed: ${error.message || 'Unknown error'}`)
+            console.error("Error in whitelist request:", error)
+            window.alert(`Whitelist request failed: ${error.message}`)
         }
         
         setRequestingWhitelist(false)
